@@ -1,0 +1,1 @@
+@extends('layouts.app')@section('title','A propos')@section('content')<div class="container-fluid py-12"><div class="max-w-4xl mx-auto"><h1 class="text-3xl font-bold mb-6">A propos de LPAbonnements</h1><p class="text-gray-600 text-lg mb-6">Plateforme de gestion d abonnements pour publications professionnelles.</p></div></div>@endsection

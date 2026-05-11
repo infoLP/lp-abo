@@ -1,0 +1,83 @@
+/* ============================================================
+   LPAbonnements - Admin Custom CSS
+   UX condensée - multi-colonnes - champs adaptés au contenu
+   ============================================================ */
+
+/* --- Pleine largeur globale --- */
+.fi-main { max-width: 100% !important; }
+.fi-sidebar { width: 260px !important; }
+.fi-page { padding: 1rem 1.5rem !important; }
+
+/* --- Header de page compact --- */
+.fi-header { margin-bottom: 0.75rem !important; }
+.fi-header-heading { font-size: 1.1rem !important; }
+
+/* --- Onglets plus compacts --- */
+.fi-tabs { gap: 0 !important; }
+.fi-tab { padding: 0.4rem 0.85rem !important; font-size: 0.8rem !important; }
+
+/* --- Sections / fieldsets --- */
+.fi-section { border-radius: 0.375rem !important; border-left: 3px solid #6366f1 !important; }
+.fi-section-header { padding: 0.5rem 1rem !important; }
+.fi-section-header-heading {
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #6b7280;
+}
+.fi-section-content { padding: 0.75rem 1rem !important; }
+.fi-section-content-ctn { gap: 0.6rem !important; }
+
+/* --- Grille de champs --- */
+.fi-fo-grid { gap: 0.6rem 1rem !important; }
+
+/* --- Labels compacts --- */
+.fi-fo-field-wrp-label { margin-bottom: 0.15rem !important; }
+.fi-fo-field-wrp-label label { font-size: 0.75rem !important; font-weight: 500 !important; }
+
+/* --- Inputs --- */
+.fi-input {
+    font-size: 0.85rem !important;
+    padding: 0.3rem 0.6rem !important;
+    min-height: 2rem !important;
+}
+.fi-select-input {
+    font-size: 0.85rem !important;
+    padding: 0.3rem 0.6rem !important;
+    min-height: 2rem !important;
+}
+.fi-fo-textarea textarea { font-size: 0.85rem !important; }
+
+/* --- Tables dans les onglets --- */
+.fi-ta { font-size: 0.82rem !important; }
+.fi-ta-header-cell { padding: 0.35rem 0.6rem !important; font-size: 0.75rem !important; }
+.fi-ta-cell { padding: 0.3rem 0.6rem !important; }
+
+/* --- Badges compacts --- */
+.fi-badge { font-size: 0.7rem !important; padding: 0.15rem 0.45rem !important; }
+
+/* --- Boutons --- */
+.fi-btn { font-size: 0.8rem !important; padding: 0.3rem 0.75rem !important; }
+.fi-btn-icon { width: 1.75rem !important; height: 1.75rem !important; }
+
+/* --- Modals en largeur contenue --- */
+.fi-modal-window { max-width: 42rem !important; }
+
+/* --- Login étroit --- */
+.fi-simple-layout {
+    max-width: 28rem !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+.fi-simple-main-ctn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 100vh !important;
+}
+
+/* --- Stats widgets compactes --- */
+.fi-wi-stats-overview-stat { padding: 0.75rem 1rem !important; }
+.fi-wi-stats-overview-stat-value { font-size: 1.4rem !important; }
+.fi-wi-stats-overview-stat-label { font-size: 0.75rem !important; }
