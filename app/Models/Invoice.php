@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use App\Enums\InvoiceStatus;
@@ -37,6 +38,24 @@ class Invoice extends Model
         ];
     }
 
+    // ── Boot ───────────────────────────────────────────────────────────────────
+
+    protected static function booted(): void
+    {
+        static::creating(function (Invoice $invoice) {
+            if (empty($invoice->invoice_number)) {
+                $prefix = 'FA';
+                $ym     = date('Ym');
+                $last   = static::withTrashed()
+                    ->where('invoice_number', 'like', "{$prefix}{$ym}%")
+                    ->orderByDesc('invoice_number')
+                    ->first();
+                $seq = $last ? ((int) substr($last->invoice_number, 8)) + 1 : 1;
+                $invoice->invoice_number = $prefix . $ym . str_pad($seq, 5, '0', STR_PAD_LEFT);
+            }
+        });
+    }
+
     // ── Relations ──────────────────────────────────────────────────────────────
 
     public function client(): BelongsTo
@@ -64,59 +83,20 @@ class Invoice extends Model
         return $this->hasMany(Order::class);
     }
 
-    // ── Numérotation automatique ───────────────────────────────────────────────
-
-    protected static function boot(): void
-    {
-        parent::boot();
-
-        static::creating(function (Invoice $invoice) {
-            if (empty($invoice->invoice_number)) {
-                $prefix = 'FA';
-                $ym     = date('Ym');
-                $last   = self::withTrashed()
-                    ->where('invoice_number', 'like', "{$prefix}{$ym}%")
-                    ->orderByDesc('invoice_number')
-                    ->first();
-                $seq = $last ? ((int) substr($last->invoice_number, 8)) + 1 : 1;
-                $invoice->invoice_number = $prefix . $ym . str_pad($seq, 5, '0', STR_PAD_LEFT);
-            }
-        });
-    }
-
     // ── Helpers ────────────────────────────────────────────────────────────────
 
-    public function isDraft(): bool
-    {
-        return $this->status === InvoiceStatus::Draft;
-    }
-
-    public function isSent(): bool
-    {
-        return $this->status === InvoiceStatus::Sent;
-    }
-
-    public function isPaid(): bool
-    {
-        return $this->status === InvoiceStatus::Paid;
-    }
-
-    public function isOverdue(): bool
-    {
-        return $this->status === InvoiceStatus::Overdue;
-    }
-
-    public function isCancelled(): bool
-    {
-        return $this->status === InvoiceStatus::Cancelled;
-    }
+    public function isDraft(): bool     { return $this->status === InvoiceStatus::Draft; }
+    public function isSent(): bool      { return $this->status === InvoiceStatus::Sent; }
+    public function isPaid(): bool      { return $this->status === InvoiceStatus::Paid; }
+    public function isOverdue(): bool   { return $this->status === InvoiceStatus::Overdue; }
+    public function isCancelled(): bool { return $this->status === InvoiceStatus::Cancelled; }
 
     /**
      * Recalcule subtotal, tax_amount et total depuis les lignes.
      */
     public function recalculateTotals(): void
     {
-        $subtotal  = $this->lines->sum(fn($l) => $l->quantity * $l->unit_price);
+        $subtotal  = $this->lines->sum(fn ($l) => $l->quantity * $l->unit_price);
         $taxAmount = round($subtotal * ($this->tax_rate ?? 2.10) / 100, 2);
         $total     = round($subtotal + $taxAmount, 2);
 

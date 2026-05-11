@@ -18,9 +18,9 @@ class Address extends Model
     ];
 
     protected $casts = [
-        'is_default'       => 'boolean',
-        'rnvp_valid'       => 'boolean',
-        'rnvp_checked_at'  => 'datetime',
+        'is_default'      => 'boolean',
+        'rnvp_valid'      => 'boolean',
+        'rnvp_checked_at' => 'datetime',
     ];
 
     public function client(): BelongsTo
@@ -28,12 +28,14 @@ class Address extends Model
         return $this->belongsTo(Client::class);
     }
 
+    // ── Helpers ────────────────────────────────────────────────────────────────
+
     /**
-     * Adresse formatée sur plusieurs lignes
+     * Construction des lignes d'adresse (logique commune à formatted() et rnvpLines())
      */
-    public function formatted(): string
+    private function buildLines(): array
     {
-        $lines = array_filter([
+        return array_filter([
             $this->l1,
             $this->l2,
             $this->l3,
@@ -46,8 +48,14 @@ class Address extends Model
             ]))),
             $this->l7_country !== 'FR' ? $this->l7_country : null,
         ]);
+    }
 
-        return implode("\n", $lines);
+    /**
+     * Adresse formatée sur plusieurs lignes
+     */
+    public function formatted(): string
+    {
+        return implode("\n", $this->buildLines());
     }
 
     /**
@@ -55,18 +63,6 @@ class Address extends Model
      */
     public function rnvpLines(): array
     {
-        return array_values(array_filter([
-            $this->l1,
-            $this->l2,
-            $this->l3,
-            $this->l4,
-            $this->l5,
-            trim(implode(' ', array_filter([
-                $this->l6_postal_code,
-                $this->l6_city,
-                $this->l6_cedex ? 'CEDEX ' . $this->l6_cedex : null,
-            ]))),
-            $this->l7_country !== 'FR' ? $this->l7_country : null,
-        ]));
+        return array_values($this->buildLines());
     }
 }

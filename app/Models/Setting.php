@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -21,7 +22,7 @@ class Setting extends Model
     {
         $val = $this->value ?? $this->default_value;
 
-        return match($this->type) {
+        return match ($this->type) {
             'boolean' => filter_var($val, FILTER_VALIDATE_BOOLEAN),
             'number'  => is_numeric($val) ? (float) $val : 0,
             default   => $val,
@@ -37,13 +38,7 @@ class Setting extends Model
     {
         return Cache::remember("setting.{$key}", 3600, function () use ($key, $default) {
             $setting = static::where('key', $key)->first();
-            if (! $setting) return $default;
-            $val = $setting->value ?? $setting->default_value;
-            return match($setting->type) {
-                'boolean' => filter_var($val, FILTER_VALIDATE_BOOLEAN),
-                'number'  => is_numeric($val) ? (float) $val : $default,
-                default   => $val ?? $default,
-            };
+            return $setting ? $setting->getTypedValue() : $default;
         });
     }
 
@@ -52,12 +47,12 @@ class Setting extends Model
      */
     public static function set(string $key, mixed $value): void
     {
-        static::where('key', $key)->update(['value' => $value]);
+        static::updateOrCreate(['key' => $key], ['value' => $value]);
         Cache::forget("setting.{$key}");
     }
 
     /**
-     * Récupère toutes les clés d'un groupe sous forme key=>value
+     * Récupère toutes les clés d'un groupe sous forme key => value
      */
     public static function group(string $group): array
     {
@@ -65,9 +60,7 @@ class Setting extends Model
             return static::where('group', $group)
                 ->orderBy('sort_order')
                 ->get()
-                ->mapWithKeys(fn($s) => [
-                    $s->key => $s->value ?? $s->default_value,
-                ])
+                ->mapWithKeys(fn ($s) => [$s->key => $s->value ?? $s->default_value])
                 ->toArray();
         });
     }
@@ -78,8 +71,8 @@ class Setting extends Model
     public static function clearGroupCache(string $group): void
     {
         Cache::forget("settings.group.{$group}");
-        static::where('group', $group)->pluck('key')->each(function ($key) {
-            Cache::forget("setting.{$key}");
-        });
+        static::where('group', $group)
+            ->pluck('key')
+            ->each(fn ($key) => Cache::forget("setting.{$key}"));
     }
 }

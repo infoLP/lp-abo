@@ -2,30 +2,30 @@
 
 namespace App\Models;
 
+use App\Enums\DuplicateStatus;
+use App\Enums\MatchType;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DuplicateGroup extends Model
 {
     protected $fillable = [
-        'match_type',
-        'match_value',
-        'confidence_score',
-        'status',
-        'clients_count',
-        'detected_at',
-        'resolved_at',
-        'resolved_by_id',
-        'resolution_notes',
+        'match_type', 'match_value', 'confidence_score', 'status',
+        'clients_count', 'detected_at', 'resolved_at',
+        'resolved_by_id', 'resolution_notes',
     ];
 
     protected $casts = [
-        'detected_at' => 'datetime',
-        'resolved_at' => 'datetime',
+        'match_type'       => MatchType::class,
+        'status'           => DuplicateStatus::class,
+        'detected_at'      => 'datetime',
+        'resolved_at'      => 'datetime',
         'confidence_score' => 'integer',
-        'clients_count' => 'integer',
+        'clients_count'    => 'integer',
     ];
+
+    // ── Relations ──────────────────────────────────────────────────────────────
 
     public function items(): HasMany
     {
@@ -37,71 +37,56 @@ class DuplicateGroup extends Model
         return $this->belongsTo(User::class, 'resolved_by_id');
     }
 
+    // ── Accesseurs — délèguent aux Enums ───────────────────────────────────────
+
     public function getMatchTypeLabelAttribute(): string
     {
-        return match ($this->match_type) {
-            'email'        => 'Email identique',
-            'siret'        => 'SIRET identique',
-            'name_postal'  => 'Nom + Prenom + CP',
-            'phone'        => 'Telephone identique',
-            'company_city' => 'Raison sociale + Ville',
-            default        => $this->match_type,
-        };
+        return $this->match_type instanceof MatchType
+            ? $this->match_type->label()
+            : (string) $this->match_type;
     }
 
     public function getMatchTypeIconAttribute(): string
     {
-        return match ($this->match_type) {
-            'email'        => 'heroicon-o-envelope',
-            'siret'        => 'heroicon-o-building-office',
-            'name_postal'  => 'heroicon-o-user',
-            'phone'        => 'heroicon-o-phone',
-            'company_city' => 'heroicon-o-building-storefront',
-            default        => 'heroicon-o-document-duplicate',
-        };
+        return $this->match_type instanceof MatchType
+            ? $this->match_type->icon()
+            : 'heroicon-o-document-duplicate';
     }
 
     public function getMatchTypeColorAttribute(): string
     {
-        return match ($this->match_type) {
-            'email'        => 'danger',
-            'siret'        => 'danger',
-            'name_postal'  => 'warning',
-            'phone'        => 'info',
-            'company_city' => 'gray',
-            default        => 'gray',
-        };
+        return $this->match_type instanceof MatchType
+            ? $this->match_type->color()
+            : 'gray';
     }
 
     public function getStatusLabelAttribute(): string
     {
-        return match ($this->status) {
-            'pending'   => 'En attente',
-            'merged'    => 'Fusionne',
-            'dismissed' => 'Ignore',
-            default     => $this->status,
-        };
+        return $this->status instanceof DuplicateStatus
+            ? $this->status->label()
+            : (string) $this->status;
     }
 
     public function getStatusColorAttribute(): string
     {
-        return match ($this->status) {
-            'pending'   => 'warning',
-            'merged'    => 'success',
-            'dismissed' => 'gray',
-            default     => 'gray',
-        };
+        return $this->status instanceof DuplicateStatus
+            ? $this->status->color()
+            : 'gray';
     }
+
+    // ── Scopes ─────────────────────────────────────────────────────────────────
 
     public function scopePending($query)
     {
-        return $query->where('status', 'pending');
+        return $query->where('status', DuplicateStatus::Pending);
     }
 
     public function scopeResolved($query)
     {
-        return $query->whereIn('status', ['merged', 'dismissed']);
+        return $query->whereIn('status', [DuplicateStatus::Merged, DuplicateStatus::Dismissed]);
     }
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
 
     public function getMasterItem(): ?DuplicateGroupItem
     {
@@ -117,9 +102,9 @@ class DuplicateGroup extends Model
     public function dismiss(?int $userId = null, ?string $notes = null): void
     {
         $this->update([
-            'status' => 'dismissed',
-            'resolved_at' => now(),
-            'resolved_by_id' => $userId,
+            'status'           => DuplicateStatus::Dismissed,
+            'resolved_at'      => now(),
+            'resolved_by_id'   => $userId,
             'resolution_notes' => $notes,
         ]);
     }
@@ -127,9 +112,9 @@ class DuplicateGroup extends Model
     public function markMerged(?int $userId = null, ?string $notes = null): void
     {
         $this->update([
-            'status' => 'merged',
-            'resolved_at' => now(),
-            'resolved_by_id' => $userId,
+            'status'           => DuplicateStatus::Merged,
+            'resolved_at'      => now(),
+            'resolved_by_id'   => $userId,
             'resolution_notes' => $notes,
         ]);
     }

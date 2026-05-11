@@ -42,6 +42,8 @@ class Order extends Model
         ];
     }
 
+    // ── Boot ───────────────────────────────────────────────────────────────────
+
     protected static function booted(): void
     {
         static::creating(function (self $order) {
@@ -55,9 +57,11 @@ class Order extends Model
     {
         $prefix = 'CMD' . now()->format('Ym');
         $last   = static::withTrashed()
-                        ->where('number', 'like', $prefix . '%')
-                        ->orderByDesc('number')->first();
-        $seq    = $last ? ((int) substr($last->number, -4)) + 1 : 1;
+            ->where('number', 'like', $prefix . '%')
+            ->orderByDesc('number')
+            ->first();
+        $seq = $last ? ((int) substr($last->number, -4)) + 1 : 1;
+
         return $prefix . str_pad($seq, 4, '0', STR_PAD_LEFT);
     }
 
@@ -86,21 +90,18 @@ class Order extends Model
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     /**
-     * Retourne la liste des bénéficiaires (multi ou simple)
-     * @return \Illuminate\Support\Collection<Client>
+     * Retourne la collection des bénéficiaires.
+     * - Multi-bénéficiaires : depuis beneficiary_ids (JSON)
+     * - Bénéficiaire unique : depuis la relation beneficiary
+     * - Aucun : collection vide (le payeur est son propre bénéficiaire)
      */
     public function getBeneficiariesCollection(): \Illuminate\Support\Collection
     {
-        // Cas multi-bénéficiaires
         if (! empty($this->beneficiary_ids)) {
             return Client::whereIn('id', $this->beneficiary_ids)->get();
         }
-        // Cas bénéficiaire unique
-        if ($this->beneficiary_id) {
-            return Client::where('id', $this->beneficiary_id)->get();
-        }
-        // Pas de bénéficiaire distinct → le payeur est son propre bénéficiaire
-        return collect();
+
+        return collect([$this->beneficiary])->filter();
     }
 
     public function isDraft(): bool
@@ -126,16 +127,18 @@ class Order extends Model
                      ->whereNull('invoice_id');
     }
 
+    // ── Calculs ───────────────────────────────────────────────────────────────
+
     public function recalculateTotals(): void
     {
-        $subtotal  = $this->lines->sum('total_ttc');
-        $remise    = $this->discount_percent > 0
-                     ? round($subtotal * $this->discount_percent / 100, 2)
-                     : $this->discount_amount;
+        $subtotal = $this->lines->sum('total_ttc');
+        $remise   = $this->discount_percent > 0
+            ? round($subtotal * $this->discount_percent / 100, 2)
+            : $this->discount_amount;
 
-        $totalTtc  = max(0, $subtotal - $remise);
-        $totalTva  = $this->lines->sum('total_tva');
-        $totalHt   = $totalTtc - $totalTva;
+        $totalTtc = max(0, $subtotal - $remise);
+        $totalTva = $this->lines->sum('total_tva');
+        $totalHt  = $totalTtc - $totalTva;
 
         $this->update([
             'subtotal'        => $subtotal,

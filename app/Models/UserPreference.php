@@ -15,13 +15,15 @@ class UserPreference extends Model
     }
 
     /**
-     * Récupérer une préférence pour l'utilisateur connecté
+     * Récupérer une préférence.
+     * $userId optionnel pour compatibilité CLI/jobs (auth() indisponible hors requête HTTP).
      */
-    public static function get(string $key, mixed $default = null): mixed
+    public static function get(string $key, mixed $default = null, ?int $userId = null): mixed
     {
-        if (! auth()->check()) return $default;
+        $userId = $userId ?? (auth()->check() ? auth()->id() : null);
+        if (! $userId) return $default;
 
-        $pref = static::where('user_id', auth()->id())
+        $pref = static::where('user_id', $userId)
                       ->where('key', $key)
                       ->first();
 
@@ -29,14 +31,16 @@ class UserPreference extends Model
     }
 
     /**
-     * Enregistrer une préférence pour l'utilisateur connecté
+     * Enregistrer une préférence.
+     * $userId optionnel pour compatibilité CLI/jobs.
      */
-    public static function set(string $key, mixed $value): void
+    public static function set(string $key, mixed $value, ?int $userId = null): void
     {
-        if (! auth()->check()) return;
+        $userId = $userId ?? (auth()->check() ? auth()->id() : null);
+        if (! $userId) return;
 
         static::updateOrCreate(
-            ['user_id' => auth()->id(), 'key' => $key],
+            ['user_id' => $userId, 'key' => $key],
             ['value'   => $value]
         );
     }

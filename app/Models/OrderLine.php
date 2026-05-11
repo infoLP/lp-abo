@@ -28,11 +28,15 @@ class OrderLine extends Model
         ];
     }
 
-    /**
-     * Calcul automatique des montants avant chaque sauvegarde
-     */
+    // ── Boot ───────────────────────────────────────────────────────────────────
+
     protected static function booted(): void
     {
+        /**
+         * Calcul automatique des montants avant chaque sauvegarde.
+         * unit_price est un prix TTC — la TVA est extraite par la formule :
+         *   tva = price * rate / (100 + rate)
+         */
         static::saving(function (self $line) {
             $price = (float) ($line->unit_price ?? 0);
             $rate  = (float) ($line->tva_rate ?? 2.10);
@@ -52,6 +56,8 @@ class OrderLine extends Model
             }
         });
     }
+
+    // ── Relations ─────────────────────────────────────────────────────────────
 
     public function order(): BelongsTo
     {

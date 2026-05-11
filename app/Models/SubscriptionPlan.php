@@ -25,22 +25,22 @@ class SubscriptionPlan extends Model
     {
         return [
             'support_type' => SupportType::class,
-            'mode' => SubscriptionMode::class,
-            'price' => 'decimal:2',
-            'is_free' => 'boolean',
-            'is_active' => 'boolean',
+            'mode'         => SubscriptionMode::class,
+            'price'        => 'decimal:2',
+            'is_free'      => 'boolean',
+            'is_active'    => 'boolean',
         ];
     }
 
-    protected static function boot(): void
-    {
-        parent::boot();
+    // ── Boot ───────────────────────────────────────────────────────────────────
 
-        static::saving(function ($plan) {
+    protected static function booted(): void
+    {
+        static::saving(function (self $plan) {
             if (empty($plan->slug) || $plan->isDirty('name')) {
                 $base = Str::slug($plan->name);
                 $slug = $base;
-                $i = 1;
+                $i    = 1;
                 while (static::where('slug', $slug)->where('id', '!=', $plan->id ?? 0)->exists()) {
                     $slug = $base . '-' . $i++;
                 }
@@ -48,6 +48,8 @@ class SubscriptionPlan extends Model
             }
         });
     }
+
+    // ── Relations ──────────────────────────────────────────────────────────────
 
     public function magazine(): BelongsTo
     {
@@ -59,8 +61,12 @@ class SubscriptionPlan extends Model
         return $this->hasMany(Subscription::class);
     }
 
+    // ── Accesseurs ─────────────────────────────────────────────────────────────
+
     public function getFormattedPriceAttribute(): string
     {
-        return $this->is_free ? 'Gratuit' : number_format($this->price, 2, ',', ' ') . ' EUR';
+        return $this->is_free
+            ? 'Gratuit'
+            : number_format($this->price, 2, ',', ' ') . ' EUR';
     }
 }
